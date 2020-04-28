@@ -1,0 +1,279 @@
+//
+//  Network.swift
+//  NetworkPlatform
+//
+//  Created by Behrad Kazemi on 8/14/18.
+//  Copyright © 2018 All rights reserved.
+//
+
+import Foundation
+import Domain
+import Alamofire
+import RxAlamofire
+import RxSwift
+
+final class Network<T: Decodable> {
+	
+	private let endPoint: String
+	private let scheduler: ConcurrentDispatchQueueScheduler
+	private let accountInfo: AccountInfoModel
+	private let dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+	private var sharedHeaders: Dictionary<String,String> {
+		return Dictionary<String,String>()
+	}
+	private let expiresRange = 200
+	init(_ endPoint: String, accountInfo: AccountInfoModel = Domain.AccountInfoModel()) {
+		self.endPoint = endPoint
+		self.scheduler = ConcurrentDispatchQueueScheduler(qos: DispatchQoS(qosClass: DispatchQoS.QoSClass.background, relativePriority: 1))
+		self.accountInfo = accountInfo
+	}
+	
+	func getItems(_ path: String, itemId: String = "") -> Observable<[T]> {
+		let absolutePath = itemId == "" ? endPoint + path : endPoint + "\(path)/\(itemId)"
+		let expires = Int(Date().timeIntervalSince1970) + expiresRange
+		let signature = accountInfo.getSignature(method: "GET", path: path, data: "", expires: expires)
+		let customHeader = [
+			"api-expires" : String(expires),
+			"api-key" : accountInfo.key,
+			"api-signature" : signature
+		]
+		return RxAlamofire
+			.request(.get, absolutePath, headers: customHeader)
+			.debug()
+			.observeOn(scheduler)
+			.responseData()
+			.map({(json) -> [T] in
+				ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+				if 200 ... 299 ~= json.0.statusCode{
+					do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+						
+						return try decoder.decode([T].self, from: data)
+					} catch {
+						throw self.handle(error: error, data: json.1, StatusCode: json.0.statusCode)
+					}
+				}
+				throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+			})
+	}
+	
+	func getItem(_ path: String, itemId: String = "") -> Observable<T> {
+		let absolutePath = itemId == "" ? endPoint + path : endPoint + "\(path)/\(itemId)"
+		
+		let expires = Int(Date().timeIntervalSince1970) + expiresRange
+		let signature = accountInfo.getSignature(method: "GET", path: path, data: "", expires: expires)
+		let customHeader = [
+			"api-expires" : String(expires),
+			"api-key" : accountInfo.key,
+			"api-signature" : signature
+		]
+
+		return RxAlamofire
+			.request(.get, absolutePath, headers: customHeader)
+			.debug()
+			.observeOn(scheduler)
+			.responseData()
+			.map({ (json) -> T in
+				ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+				if 200 ... 299 ~= json.0.statusCode{
+					do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+
+						return try decoder.decode(T.self, from: data)
+						//            return try JSONDecoder().decode(T.self, from: json.1)
+					} catch let err {
+						print(String(bytes: json.1, encoding: .utf8) ?? "")
+						throw self.handle(error: err, data: json.1, StatusCode: json.0.statusCode)
+					}
+				}
+				throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+			})
+		
+	}
+  func postItem(_ path: String, parameters: [String: Any], delayTime: TimeInterval = 0) -> Observable<T> {
+		let absolutePath = endPoint + path
+		print("POST: \non: \(absolutePath)\nparameters: \(parameters)")
+		
+		var stringData = ""
+		if let jsonData = try? JSONSerialization.data(withJSONObject: parameters, options: []) {
+					stringData = String(data: jsonData, encoding: .utf8)!.replacingOccurrences(of: "\\", with: "")
+		}
+
+		let expires = Int(Date().timeIntervalSince1970) + expiresRange
+		let signature = accountInfo.getSignature(method: "POST", path: path, data: stringData, expires: expires)
+		let customHeader = [
+			"api-expires" : String(expires),
+			"api-key" : accountInfo.key,
+			"api-signature" : signature
+		]
+		return RxAlamofire
+			.request(.post, absolutePath, parameters: parameters, encoding: JSONEncoding.default, headers: customHeader)
+			.debug()
+      .delay(RxTimeInterval(delayTime), scheduler: scheduler)
+			.observeOn(scheduler)
+			.responseData()
+			.map({ (json) -> T in
+				ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+				if 200 ... 299 ~= json.0.statusCode {
+					do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+						
+						return try decoder.decode(T.self, from: data)
+					} catch {
+						throw self.handle(error: error, data: json.1, StatusCode: json.0.statusCode)
+					}
+				}
+				throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+			})
+	}
+	func putItem(_ path: String, parameters: [String: Any]) -> Observable<T> {
+		let absolutePath = endPoint + path
+		print("PUT: \non: \(absolutePath)\nparameters: \(parameters)")
+		var stringData = ""
+		if let jsonData = try? JSONSerialization.data(withJSONObject: parameters, options: []) {
+			stringData = String(data: jsonData, encoding: .utf8)!
+		}
+		
+		let expires = Int(Date().timeIntervalSince1970) + expiresRange
+		let signature = accountInfo.getSignature(method: "PUT", path: path, data: stringData, expires: expires)
+		let customHeader = [
+			"api-expires" : String(expires),
+			"api-key" : accountInfo.key,
+			"api-signature" : signature
+		]
+		return RxAlamofire
+			.request(.put, absolutePath, parameters: parameters, encoding: JSONEncoding.default, headers: customHeader)
+			.debug()
+			.observeOn(scheduler)
+			.responseData()
+			.map({ (json) -> T in
+				ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+				if 200 ... 299 ~= json.0.statusCode{
+					do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+						
+						return try decoder.decode(T.self, from: data)
+					} catch {
+						throw self.handle(error: error, data: json.1, StatusCode: json.0.statusCode)
+					}
+				}
+				throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+			})
+	}
+	
+	func postItems(_ path: String, parameters: [String: Any]) -> Observable<[T]> {
+		let absolutePath = endPoint + path
+		
+		var stringData = ""
+		if let jsonData = try? JSONSerialization.data(withJSONObject: parameters, options: []) {
+			stringData = String(data: jsonData, encoding: .utf8)!
+		}
+		
+		let expires = Int(Date().timeIntervalSince1970) + expiresRange
+		let signature = accountInfo.getSignature(method: "POST", path: path, data: stringData, expires: expires)
+		let customHeader = [
+			"api-expires" : String(expires),
+			"api-key" : accountInfo.key,
+			"api-signature" : signature
+		]
+		return RxAlamofire
+			.request(.post, absolutePath, parameters: parameters, encoding: JSONEncoding.default, headers: customHeader)
+			.debug()
+			.observeOn(scheduler)
+			.responseData()
+			.map({ (json) -> [T] in
+				ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+				if 200 ... 299 ~= json.0.statusCode{
+					do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+						
+						return try decoder.decode([T].self, from: data)
+					} catch {
+						
+						throw self.handle(error: error, data: json.1, StatusCode: json.0.statusCode)
+					}
+				}
+				throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+			})
+	}
+  func deleteItem(_ path: String, parameters: [String: Any]) -> Observable<[T]> {
+    let absolutePath = endPoint + path
+    print("Delete: \non: \(absolutePath)\nparameters: \(parameters)")
+    var stringData = ""
+    if let jsonData = try? JSONSerialization.data(withJSONObject: parameters, options: []) {
+      stringData = String(data: jsonData, encoding: .utf8)!
+    }
+    
+    let expires = Int(Date().timeIntervalSince1970) + expiresRange
+    let signature = accountInfo.getSignature(method: "DELETE", path: path, data: stringData, expires: expires)
+    let customHeader = [
+      "api-expires" : String(expires),
+      "api-key" : accountInfo.key,
+      "api-signature" : signature
+    ]
+    return RxAlamofire
+      .request(.delete, absolutePath, parameters: parameters, encoding: JSONEncoding.default, headers: customHeader)
+      .debug()
+      .observeOn(scheduler)
+      .responseData()
+      .map({ (json) -> [T] in
+        ResponseAnalytics.printResponseData(status: json.0.statusCode, responseData: json.1)
+        if 200 ... 299 ~= json.0.statusCode{
+          do{
+						let data = json.1
+						let decoder = JSONDecoder()
+						let dateFormatter = DateFormatter()
+						dateFormatter.dateFormat = self.dateFormat
+						decoder.dateDecodingStrategy = .formatted(dateFormatter)
+						
+						return try decoder.decode([T].self, from: data)
+          } catch let error{
+						
+            throw self.handle(error: error, data: json.1, StatusCode: json.0.statusCode)
+          }
+        }
+        throw self.handle(data: json.1, StatusCode: json.0.statusCode)
+      })
+  }
+	func handle(error: Error, data: Data, StatusCode code: Int) -> NSError {
+		ResponseAnalytics.printError(status: code, error: error)
+		do {
+			let responseError = try JSONDecoder().decode(ErrorResponse.Base.self, from: data)
+			
+			return NSError(domain: ErrorTypes.externalError.rawValue, code: code, userInfo: ["responseError": responseError])
+		}catch{
+			return NSError(domain: ErrorTypes.internalError.rawValue, code: code, userInfo: ["data" : String(data: data, encoding: .utf8)!])
+		}
+	}
+	
+	func handle(data: Data, StatusCode code: Int) -> NSError {
+		do {
+			let responseError = try JSONDecoder().decode(ErrorResponse.Base.self, from: data)
+			
+			return NSError(domain: ErrorTypes.externalError.rawValue, code: code, userInfo: ["responseError": responseError])
+		}catch{
+			return NSError(domain: ErrorTypes.internalError.rawValue, code: code, userInfo: ["data" : String(data: data, encoding: .utf8)!])
+		}
+	}
+	
+}

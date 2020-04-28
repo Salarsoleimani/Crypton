@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="RestrictedViewController" customModule="Crypton" customModuleProvider="target">
+            <connections>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="301" height="840"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" id="seT-Vj-Esg">
+                    <rect key="frame" x="32" y="124" width="237" height="279.5"/>
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Oops!" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mN2-nI-Bwx">
+                            <rect key="frame" x="59" y="0.0" width="119" height="55"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="46"/>
+                            <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Restricted" translatesAutoresizingMaskIntoConstraints="NO" id="eMr-hD-sEe">
+                            <rect key="frame" x="54.5" y="71" width="128" height="128"/>
+                        </imageView>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sound like you are tring to connect from Restricted Country!" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MP3-dQ-f1z">
+                            <rect key="frame" x="11" y="215" width="215" height="64.5"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                            <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                    </subviews>
+                </stackView>
+                <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="tBn-jM-w60">
+                    <rect key="frame" x="9" y="728" width="283" height="46"/>
+                    <subviews>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="E9a-Z4-T0K">
+                            <rect key="frame" x="64" y="8" width="155" height="30"/>
+                            <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <state key="normal" title="Open Settings for VPN">
+                                <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </state>
+                            <connections>
+                                <action selector="openSettings:" destination="-1" eventType="touchUpInside" id="b4g-Ga-vxh"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                    <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="trailing" secondItem="E9a-Z4-T0K" secondAttribute="trailing" priority="999" constant="64" id="Jze-2j-DgM"/>
+                        <constraint firstItem="E9a-Z4-T0K" firstAttribute="top" secondItem="tBn-jM-w60" secondAttribute="top" constant="8" id="sFc-mh-5u3"/>
+                        <constraint firstItem="E9a-Z4-T0K" firstAttribute="leading" secondItem="tBn-jM-w60" secondAttribute="leading" priority="999" constant="64" id="u3j-UM-c8S"/>
+                        <constraint firstAttribute="bottom" secondItem="E9a-Z4-T0K" secondAttribute="bottom" constant="8" id="xzL-EI-e2T"/>
+                    </constraints>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                            <integer key="value" value="16"/>
+                        </userDefinedRuntimeAttribute>
+                    </userDefinedRuntimeAttributes>
+                </view>
+            </subviews>
+            <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstItem="fnl-2z-Ty3" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="tBn-jM-w60" secondAttribute="trailing" constant="8" id="Any-XF-2P6"/>
+                <constraint firstItem="seT-Vj-Esg" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="80" id="CNZ-E2-arP"/>
+                <constraint firstItem="fnl-2z-Ty3" firstAttribute="bottom" secondItem="tBn-jM-w60" secondAttribute="bottom" constant="32" id="Gb4-Ws-hPP"/>
+                <constraint firstItem="tBn-jM-w60" firstAttribute="centerX" secondItem="fnl-2z-Ty3" secondAttribute="centerX" id="tl8-ln-dPh"/>
+                <constraint firstItem="seT-Vj-Esg" firstAttribute="centerX" secondItem="fnl-2z-Ty3" secondAttribute="centerX" id="uEo-rz-3KS"/>
+                <constraint firstItem="seT-Vj-Esg" firstAttribute="leading" secondItem="fnl-2z-Ty3" secondAttribute="leading" constant="32" id="yVP-aP-2jk"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>
+            <point key="canvasLocation" x="-8" y="60"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="Restricted" width="128" height="128"/>
+    </resources>
+</document>
